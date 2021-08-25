@@ -56,7 +56,7 @@ fn multiple_ref_test(){
         .arg("-b")
         .arg("./tests/test_bams/sorted_merged_bam_3x.bam")
         .arg("-v")
-        .arg("./tests/test_vcfs/merged_vcf.vcf")
+        .arg("./tests/test_vcfs/pds.vcf")
         .arg("-o")
         .arg("./tests/output_frag.txt")
         .assert();

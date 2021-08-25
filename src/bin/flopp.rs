@@ -13,14 +13,19 @@ use std::time::Instant;
 
 fn main() {
     let matches = App::new("flopp")
-                          .version("0.1.0")
+                          .version("0.2.0")
                           .setting(AppSettings::ArgRequiredElseHelp)
-                          .about("flopp - fast local polyploid phasing from long read sequencing.\n\nExample usage :\nflopp -b bamfile.bam -v vcffile.vcf -p (ploidy) -o results.txt (with VCF and BAM)\nflopp -f fragfile.frags -p (ploidy) -o unpolished_results.txt (with fragment file)\nflopp -f fragfile.frags -v vcffile.vcf -p (ploidy) -o polished_results.txt (polished output with fragment file and VCF)")
+                          .about("flopp - fast local polyploid phasing from long read sequencing.\n\nExample usage:\nflopp -b bamfile.bam -v vcffile.vcf -p (ploidy) -o results.txt [with VCF and BAM]\nflopp -b bamfile.bam -c vcffile.vcf -p (ploidy) -o results.txt -P partition_results [with VCF and without polishing/non-confident genotyping + outputting partition in partition_results]\nflopp -f fragfile.frags -p (ploidy) -o unpolished_results.txt [with fragment file]")
                           .arg(Arg::with_name("frag")
                                .short("f")
                                .value_name("FRAGFILE")
                                .help("Input a fragment file.")
                                .takes_value(true))
+                          .arg(Arg::with_name("vcf no polish")
+                              .short("c")
+                              .value_name("VCFFILE")
+                               .help("Input a VCF: Does NOT use polishing. Use this if your VCF is not polyploid or you are not confident in the genotype.")
+                                .takes_value(true))
                           .arg(Arg::with_name("bam")
                               .short("b")
                               .value_name("BAMFILE")
@@ -28,7 +33,7 @@ fn main() {
                                 .takes_value(true))
                           .arg(Arg::with_name("vcf")
                                .short("v")
-                               .help("Input a VCF : Mandatory if using BAM file; Enables genotype polishing if using frag file.")
+                               .help("Input a VCF: Mandatory if using BAM file; Enables genotype polishing if using frag file.")
                                .value_name("VCFFILE")
                                .takes_value(true))
                           .arg(Arg::with_name("ploidy")
@@ -53,18 +58,43 @@ fn main() {
                               .help("Name of output file (default : flopp_out.txt)")
                               .value_name("OUTPUT")
                               .takes_value(true))
+                          .arg(Arg::with_name("partition output")
+                              .short("P")
+                              .help("Output read partition. (default : no partition output. Specify directory name when using -P.)")
+                              .value_name("PARTITION OUTPUT")
+                              .takes_value(true))
                           .arg(Arg::with_name("epsilon")
+                              .help("Error rate used in probabilistic modeling. (default : automatically determined. Usually around 0.02-0.05)")
+                              .value_name("EPSILON")
                               .short("e")
-                              .takes_value(true)
-                              .hidden(true))
+                              .takes_value(true))
                           .arg(Arg::with_name("binomial factor")
                               .short("s")
                               .takes_value(true)
                               .value_name("BINOMIAL FACTOR")
-                              .help("The normalizing factor for UPEM (sigma in the paper)"))
+                              .help("The normalizing factor for UPEM (sigma in the paper). Higher values imply more uniform partitioning. (default : 25)"))
+                          .arg(Arg::with_name("block_len_quant")
+                              .short("B")
+                              .takes_value(true)
+                              .value_name("BLOCK LENGTH QUANTILE (0.00-1.00)")
+                              .help("The quantile we use for the haplotype block lengths. Make higher for larger initial blocks during haplotyping. (default : 0.33 a.k.a 33% quantile)"))
+
+                          .arg(Arg::with_name("use_mec")
+                              .short("m")
+                              .help("Use MEC score instead of UPEM for cluster refinement. Use this when your haplotypes have unbalanced coverage. (default : use UPEM)"))
+                          .arg(Arg::with_name("fill_in")
+                              .short("i")
+                              .help("Don't fill in blocks that have a lot of errors (on by default)."))
                           .get_matches();
 
     let num_t_str = matches.value_of("threads").unwrap_or("10");
+    let block_len_quant_str = matches.value_of("block_len_quant").unwrap_or("0.33");
+
+    let block_len_quant = match block_len_quant_str.parse::<f64>() {
+        Ok(block_len_quant) => block_len_quant,
+        Err(_) => panic!("Quantile for haplotype block lengths must be a float between 0.00 and 1.00."),
+    };
+
     let num_t = match num_t_str.parse::<usize>() {
         Ok(num_t) => num_t,
         Err(_) => panic!("Number of threads must be positive integer"),
@@ -74,10 +104,27 @@ fn main() {
         Ok(ploidy) => ploidy,
         Err(_) => panic!("Must input valid ploidy"),
     };
-    let heuristic_multiplier_str = matches.value_of("ploidy").unwrap_or("25.0");
+
+    let use_mec = matches.is_present("use_mec");
+    let fill = !matches.is_present("fill_in");
+
+    let heuristic_multiplier_str = matches.value_of("binomial factor").unwrap_or("25.0");
     let heuristic_multiplier = match heuristic_multiplier_str.parse::<f64>() {
-        Ok(ploidy) => ploidy,
-        Err(_) => panic!("Must input valid ploidy"),
+        Ok(heuristic_multiplier) => heuristic_multiplier,
+        Err(_) => panic!("Must input valid binomial normalization."),
+    };
+
+    //If the user is splitting the bam file according to the output partition.
+    let bam_part_out;
+    let bam_part_out_dir = match matches.value_of("partition output") {
+        None => {
+            bam_part_out = false;
+            "_"
+        }
+        Some(bam_part_out_dir) => {
+            bam_part_out = true;
+            bam_part_out_dir
+        }
     };
 
     //If the user is getting frag files from BAM and VCF.
@@ -108,7 +155,7 @@ fn main() {
 
     //Whether or not we polish using genotyping information from VCF.
     let vcf;
-    let vcf_file = match matches.value_of("vcf") {
+    let mut vcf_file = match matches.value_of("vcf") {
         None => {
             vcf = false;
             "_"
@@ -118,6 +165,28 @@ fn main() {
             vcf_file
         }
     };
+
+    //Use a VCF without polishing.
+    let vcf_nopolish;
+    let vcf_file_nopolish = match matches.value_of("vcf no polish") {
+        None => {
+            vcf_nopolish = false;
+            "_"
+        }
+        Some(vcf_file_nopolish) => {
+            vcf_nopolish = true;
+            vcf_file_nopolish
+        }
+    };
+
+    if vcf_nopolish{
+        vcf_file = vcf_file_nopolish;
+    }
+
+    if vcf_nopolish && vcf{
+        panic!("Only use one of the VCF options. -c if diploid VCF or choosing to polish, -v otherwise.\n");
+    }
+
 
     //Only haplotype variants in a certain range : TODO
     let _range;
@@ -138,7 +207,7 @@ fn main() {
         panic!("If using frag as input, BAM file should not be specified")
     }
 
-    if bam && !vcf {
+    if bam && (!vcf && !vcf_nopolish){
         panic!("Must input VCF file if using BAM file");
     }
 
@@ -153,8 +222,6 @@ fn main() {
     //Blocks outside of the range will get filled in.
     let iqr_factor = 3.0;
     let polish = vcf;
-    //If we fill blocks with poor UPEM score.
-    let fill = true;
     //If we estimate the frag error rate by clustering a few random test blocks.
     let estimate_epsilon = true;
     //Number of iterations for the iterative UPEM optimization
@@ -173,7 +240,7 @@ fn main() {
     let mut genotype_dict_map: FxHashMap<String, FxHashMap<usize, FxHashMap<usize, usize>>> =
         FxHashMap::default();
     let mut snp_to_genome_pos_map: FxHashMap<String, Vec<usize>> = FxHashMap::default();
-    if vcf {
+    if vcf || vcf_nopolish {
         let (snp_to_genome_pos_t, genotype_dict_t, vcf_ploidy) =
             file_reader::get_genotypes_from_vcf_hts(vcf_file);
         snp_to_genome_pos_map = snp_to_genome_pos_t;
@@ -181,28 +248,34 @@ fn main() {
 
         //If the VCF file is misformatted or has weird genotyping call we can catch that here.
         if vcf_ploidy != ploidy {
-            panic!("VCF File ploidy doesn't match input ploidy");
+            if polish{
+                panic!("VCF File ploidy doesn't match input ploidy");
+            }
         }
     }
 
     let mut first_iter = true;
 
-    for (contig,all_frags) in all_frags_map.iter_mut(){
-        if snp_to_genome_pos_map.contains_key(contig) ||
-        bam == false{
+    for (contig, all_frags) in all_frags_map.iter_mut() {
+        if snp_to_genome_pos_map.contains_key(contig) || bam == false {
+            let mut genotype_dict: &FxHashMap<usize, FxHashMap<usize, usize>> =
+                &FxHashMap::default();
+            let mut snp_to_genome_pos: &Vec<usize> = &Vec::new();
 
-            let mut genotype_dict: &FxHashMap<usize, FxHashMap<usize, usize>> = &FxHashMap::default();
-            let mut snp_to_genome_pos : &Vec<usize> = &Vec::new();
-
-            if bam == true{
+            if bam == true {
                 snp_to_genome_pos = snp_to_genome_pos_map.get(contig).unwrap();
-                genotype_dict = genotype_dict_map.get(contig).unwrap();
-            }
-            else{
-                for value in genotype_dict_map.values(){
+                if polish == true{
+                    genotype_dict = genotype_dict_map.get(contig).unwrap();
+                }
+            } 
+            //I think this is done because there is assumd to be only 1 contig,
+            //so we just iterate over a container of size 1. Furthermore, 
+            //genotype_dict_map is empty in the case of using frags. 
+            else {
+                for value in genotype_dict_map.values() {
                     genotype_dict = value;
                 }
-                for value in snp_to_genome_pos_map.values(){
+                for value in snp_to_genome_pos_map.values() {
                     snp_to_genome_pos = value;
                 }
             }
@@ -214,7 +287,6 @@ fn main() {
             let avg_read_length = utils_frags::get_avg_length(&all_frags, 0.5);
             println!("Median read length is {}", avg_read_length);
 
-            let block_len_quant = 0.33;
 
             //The sample size correction factor for the binomial test used on the bases/errors.
             let binomial_factor = (avg_read_length as f64) / heuristic_multiplier;
@@ -253,6 +325,9 @@ fn main() {
                     epsilon,
                 );
             }
+
+            //TEST TODO
+            //epsilon = epsilon * ploidy as f64 / 4.0;
 
             if epsilon == 0.0 {
                 epsilon = 0.010;
@@ -293,6 +368,7 @@ fn main() {
                             polish,
                             num_iters_optimizing,
                             binomial_factor,
+                            use_mec,
                         );
 
                     let mut locked_parts = parts.lock().unwrap();
@@ -337,7 +413,7 @@ fn main() {
 
             //Link and polish all blocks.
             //    let mut final_part = vcf_polishing::link_blocks(&part_filled);
-            let final_part = vcf_polishing::link_blocks_greedy(&part_filled);
+            let mut final_part = vcf_polishing::link_blocks_greedy(&part_filled, &all_frags);
             //    let mut final_part = vcf_polishing::link_blocks_heur(&part_filled,4);
 
             //    for i in 0..ploidy{
@@ -359,9 +435,21 @@ fn main() {
             }
 
             //TEST SECTION
-            //Map all reads against putative haplotype; DBG currently may be useful
-            //for breaking blocks
-            //    vcf_polishing::remove_duplicate_reads(&mut final_part,&all_frags,&final_block_polish);
+            //
+            vcf_polishing::remove_duplicate_reads(
+                &mut final_part,
+                &all_frags,
+                &final_block_unpolish,
+            );
+
+            let (f_binom_vec, f_freq_vec) =
+                local_clustering::get_partition_stats(&final_part, &final_block_unpolish);
+            let final_score = local_clustering::get_mec_score(&f_binom_vec, &f_freq_vec, 0.0, 0.0);
+            println!(
+                "Final MEC score for the partition is {:?}.",
+                -1.0 * final_score
+            );
+
             //    vcf_polishing::map_reads_against_hap_errors(&final_part,&final_block_polish,epsilon);
             //    let final_block_unpolish = utils_frags::hap_block_from_partition(&final_part);
             //    let mut final_block_polish = HapBlock { blocks: Vec::new() };
@@ -389,7 +477,7 @@ fn main() {
                     &snp_to_genome_pos,
                     &final_part,
                     first_iter,
-                    contig
+                    contig,
                 );
             } else {
                 file_reader::write_blocks_to_file(
@@ -399,8 +487,12 @@ fn main() {
                     &snp_to_genome_pos,
                     &final_part,
                     first_iter,
-                    contig
+                    contig,
                 );
+            }
+
+            if bam_part_out {
+                file_reader::write_output_partition_to_file(&final_part, bam_part_out_dir, contig);
             }
 
             first_iter = false;
