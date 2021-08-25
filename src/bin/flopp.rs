@@ -13,9 +13,9 @@ use std::time::Instant;
 
 fn main() {
     let matches = App::new("flopp")
-                          .version("0.1.0")
+                          .version("0.2.0")
                           .setting(AppSettings::ArgRequiredElseHelp)
-                          .about("flopp - fast local polyploid phasing from long read sequencing.\n\nExample usage :\nflopp -b bamfile.bam -v vcffile.vcf -p (ploidy) -o results.txt (with VCF and BAM)\nflopp -f fragfile.frags -p (ploidy) -o unpolished_results.txt (with fragment file)\nflopp -f fragfile.frags -v vcffile.vcf -p (ploidy) -o polished_results.txt (polished output with fragment file and VCF)")
+                          .about("flopp - fast local polyploid phasing from long read sequencing.\n\nExample usage:\nflopp -b bamfile.bam -v vcffile.vcf -p (ploidy) -o results.txt [with VCF and BAM]\nflopp -b bamfile.bam -c vcffile.vcf -p (ploidy) -o results.txt -P partition_results [with VCF and without polishing/non-confident genotyping + outputting partition in partition_results]\nflopp -f fragfile.frags -p (ploidy) -o unpolished_results.txt [with fragment file]")
                           .arg(Arg::with_name("frag")
                                .short("f")
                                .value_name("FRAGFILE")
@@ -24,7 +24,7 @@ fn main() {
                           .arg(Arg::with_name("vcf no polish")
                               .short("c")
                               .value_name("VCFFILE")
-                               .help("Input a VCF: Does NOT use polishing. Use this if your VCF is not polyploid.")
+                               .help("Input a VCF: Does NOT use polishing. Use this if your VCF is not polyploid or you are not confident in the genotype.")
                                 .takes_value(true))
                           .arg(Arg::with_name("bam")
                               .short("b")
@@ -59,25 +59,42 @@ fn main() {
                               .value_name("OUTPUT")
                               .takes_value(true))
                           .arg(Arg::with_name("partition output")
-                              .short("h")
-                              .help("Partition BAM based on read partition. (default : no BAM output. Specify file name when using -h.)")
-                              .value_name("PARTITION OUTPUT BAM")
+                              .short("P")
+                              .help("Output read partition. (default : no partition output. Specify directory name when using -P.)")
+                              .value_name("PARTITION OUTPUT")
                               .takes_value(true))
                           .arg(Arg::with_name("epsilon")
+                              .help("Error rate used in probabilistic modeling. (default : automatically determined. Usually around 0.02-0.05)")
+                              .value_name("EPSILON")
                               .short("e")
-                              .takes_value(true)
-                              .hidden(true))
+                              .takes_value(true))
                           .arg(Arg::with_name("binomial factor")
                               .short("s")
                               .takes_value(true)
                               .value_name("BINOMIAL FACTOR")
-                              .help("The normalizing factor for UPEM (sigma in the paper)"))
+                              .help("The normalizing factor for UPEM (sigma in the paper). Higher values imply more uniform partitioning. (default : 25)"))
+                          .arg(Arg::with_name("block_len_quant")
+                              .short("B")
+                              .takes_value(true)
+                              .value_name("BLOCK LENGTH QUANTILE (0.00-1.00)")
+                              .help("The quantile we use for the haplotype block lengths. Make higher for larger initial blocks during haplotyping. (default : 0.33 a.k.a 33% quantile)"))
+
                           .arg(Arg::with_name("use_mec")
                               .short("m")
-                              .help("Use MEC score instead of UPEM for cluster refinement. Use this when your haplotypes have unbalanced coverage."))
+                              .help("Use MEC score instead of UPEM for cluster refinement. Use this when your haplotypes have unbalanced coverage. (default : use UPEM)"))
+                          .arg(Arg::with_name("fill_in")
+                              .short("i")
+                              .help("Don't fill in blocks that have a lot of errors (on by default)."))
                           .get_matches();
 
     let num_t_str = matches.value_of("threads").unwrap_or("10");
+    let block_len_quant_str = matches.value_of("block_len_quant").unwrap_or("0.33");
+
+    let block_len_quant = match block_len_quant_str.parse::<f64>() {
+        Ok(block_len_quant) => block_len_quant,
+        Err(_) => panic!("Quantile for haplotype block lengths must be a float between 0.00 and 1.00."),
+    };
+
     let num_t = match num_t_str.parse::<usize>() {
         Ok(num_t) => num_t,
         Err(_) => panic!("Number of threads must be positive integer"),
@@ -89,6 +106,7 @@ fn main() {
     };
 
     let use_mec = matches.is_present("use_mec");
+    let fill = !matches.is_present("fill_in");
 
     let heuristic_multiplier_str = matches.value_of("binomial factor").unwrap_or("25.0");
     let heuristic_multiplier = match heuristic_multiplier_str.parse::<f64>() {
@@ -204,8 +222,6 @@ fn main() {
     //Blocks outside of the range will get filled in.
     let iqr_factor = 3.0;
     let polish = vcf;
-    //If we fill blocks with poor UPEM score.
-    let fill = true;
     //If we estimate the frag error rate by clustering a few random test blocks.
     let estimate_epsilon = true;
     //Number of iterations for the iterative UPEM optimization
@@ -271,7 +287,6 @@ fn main() {
             let avg_read_length = utils_frags::get_avg_length(&all_frags, 0.5);
             println!("Median read length is {}", avg_read_length);
 
-            let block_len_quant = 0.33;
 
             //The sample size correction factor for the binomial test used on the bases/errors.
             let binomial_factor = (avg_read_length as f64) / heuristic_multiplier;

@@ -704,7 +704,7 @@ pub fn link_blocks_greedy<'a>(all_parts: &Vec<Vec<FxHashSet<&'a Frag>>>,
             countvec1.push(final_part[j].len());
             countvec2.push(part_to_link[best_perm[j]].len());
         }
-        dbg!(&countvec1,&countvec2);
+        //dbg!(&countvec1,&countvec2);
         countvec2.sort();
         for j in 0..ploidy{
             part_size_distribution_sum[j].push(countvec2[j]);
@@ -714,7 +714,7 @@ pub fn link_blocks_greedy<'a>(all_parts: &Vec<Vec<FxHashSet<&'a Frag>>>,
     for j in 0..ploidy{
         part_size_distribution_sum[j].sort();
         let dist = &part_size_distribution_sum[j];
-        dbg!(dist[(dist.len() as f64 * 0.5) as usize]);
+        //dbg!(dist[(dist.len() as f64 * 0.5) as usize]);
     }
     final_part
 }
