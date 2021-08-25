@@ -2,7 +2,7 @@
 
 ## Release Notes:
 
-### v0.2.0 flopp
+### v0.2.0 flopp - Aug 25, 2021
 
 - Added options; user can now manipulate error rates, block lengths, and more
 - flopp can now output the read partition obtained by phasing using the -P option
