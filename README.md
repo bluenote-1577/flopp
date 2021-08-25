@@ -72,8 +72,11 @@ If using a bam file with multiple contigs being mapped to, the output file conta
 
 If using `-P` option, flopp outputs the read partition obtained by flopp. The format looks like
 ```
-#1/2/3/../p
-(read_name) (first SNP position covered) (last SNP position covered)
+#1
+(read_name1) (first SNP position covered) (last SNP position covered)
+(read_name2) (first SNP position covered) (last SNP position covered)
+...
+#2
 ...
 ```
 
