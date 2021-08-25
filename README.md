@@ -70,13 +70,13 @@ flopp outputs a phased haplotype file in the following format:
 
 If using a bam file with multiple contigs being mapped to, the output file contain multiple phased haplotypes of the above format which are delimited by `**(contig name)**`.
 
-If using `-P` option, flopp outputs the read partition obtained by flopp. The format looks like
+If using `-P` option, flopp outputs the read partition obtained by flopp. The format looks like:
 ```
-#1
+#1 (partition #1)
 (read_name1) (first SNP position covered) (last SNP position covered)
 (read_name2) (first SNP position covered) (last SNP position covered)
 ...
-#2
+#2 (partition #2)
 ...
 ```
 
