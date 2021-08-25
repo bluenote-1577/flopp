@@ -535,7 +535,7 @@ where P: AsRef<Path>,
     for (i, set) in part.iter().enumerate(){
         write!(file, "#{}\n", i).unwrap();
         for frag in set{
-            write!(file, "{}\t{}\n", frag.id.clone(), frag.counter_id.clone()).unwrap();
+            write!(file, "{}\t{}\t{}\n", frag.id.clone(), frag.first_position,frag.last_position).unwrap();
         }
     }
 }
