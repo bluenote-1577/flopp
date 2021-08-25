@@ -1,5 +1,15 @@
 # flopp : fast local polyploid phasing from long read sequencing.
 
+## Release Notes:
+
+### v0.2.0 flopp
+
+- Added options; user can now manipulate error rates, block lengths, and more
+- flopp can now output the read partition obtained by phasing using the -P option
+- flopp outputs MEC to stdout by default now
+- fixed a bug where the UPEM normalization was too small
+- Can now input non-polyploid VCF file. If your genotypes are not confident or if you use a diploid variant caller, you can use -c (VCF) instead. 
+
 ## Introduction
 
 **flopp** is a software package for single individual haplotype phasing of polyploid organisms from long read sequencing. flopp is extremely fast, multithreaded, and written entirely in the rust programming language. flopp offers an order of magnitude speedup and better accuracies compared to other polyploid haplotype phasing algorithms.
@@ -59,6 +69,16 @@ flopp outputs a phased haplotype file in the following format:
 3. The next k columns are of the form (allele):(# calls)|(allele):(# calls) where (allele) = 0,1,... and (# calls) is the number of reads assigned to a specific haplotype which contain that allele. For example, 0:10|1:5 indicates that 10 reads assigned to this haplotype have allele 0 at this position, and 5 reads have allele 1. 
 
 If using a bam file with multiple contigs being mapped to, the output file contain multiple phased haplotypes of the above format which are delimited by `**(contig name)**`.
+
+If using `-P` option, flopp outputs the read partition obtained by flopp. The format looks like:
+```
+#1 (partition #1)
+(read_name1) (first SNP position covered) (last SNP position covered)
+(read_name2) (first SNP position covered) (last SNP position covered)
+...
+#2 (partition #2)
+...
+```
 
 ## Upcoming
 
