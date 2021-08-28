@@ -84,7 +84,11 @@ fn main() {
                               .help("Use MEC score instead of UPEM for cluster refinement. Use this when your haplotypes have unbalanced coverage. (default : use UPEM)"))
                           .arg(Arg::with_name("fill_in")
                               .short("i")
-                              .help("Don't fill in blocks that have a lot of errors (on by default)."))
+                              .help("Fill in blocks that have a lot of errors (off by default)."))
+                          .arg(Arg::with_name("keep_duplicates")
+                              .short("d")
+                              .help("Allow duplicate reads in partition. This doesn't change the phasing algorithm but allows reads to be in multiple partitions, perhaps simplifying downstream analysis. (off by default)"))
+
                           .get_matches();
 
     let num_t_str = matches.value_of("threads").unwrap_or("10");
@@ -106,7 +110,8 @@ fn main() {
     };
 
     let use_mec = matches.is_present("use_mec");
-    let fill = !matches.is_present("fill_in");
+    let fill = matches.is_present("fill_in");
+    let keep_duplicates = matches.is_present("keep_duplicates");
 
     let heuristic_multiplier_str = matches.value_of("binomial factor").unwrap_or("25.0");
     let heuristic_multiplier = match heuristic_multiplier_str.parse::<f64>() {
@@ -436,11 +441,13 @@ fn main() {
 
             //TEST SECTION
             //
-            vcf_polishing::remove_duplicate_reads(
-                &mut final_part,
-                &all_frags,
-                &final_block_unpolish,
-            );
+            if !keep_duplicates{
+                vcf_polishing::remove_duplicate_reads(
+                    &mut final_part,
+                    &all_frags,
+                    &final_block_unpolish,
+                );
+            }
 
             let (f_binom_vec, f_freq_vec) =
                 local_clustering::get_partition_stats(&final_part, &final_block_unpolish);

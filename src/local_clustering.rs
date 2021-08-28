@@ -54,8 +54,10 @@ pub fn find_reads_in_interval<'a>(
 
         //Currently we use 1/3 quantile as the length of the block, i.e.
         //end-start. If a mapping is weird and the fragment
-        //spans several regions, we ignore the fragment.
-        if frag.last_position - frag.first_position > 20 * (end - start) {
+        //spans several regions, we ignore the fragment. TODO make this an adjustable parameter. 
+        let max_read_length = 150000;
+        let len_of_snp = 45;
+        if frag.last_position - frag.first_position > (max_read_length/len_of_snp as usize){
             continue;
         }
 
