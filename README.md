@@ -89,12 +89,15 @@ This will output a set of bams labelled `prefix_name1.bam`, `prefix_name2.bam` a
 
 ### Misc.
 
-### Fragment file
+#### Fragment file
 A user can also input a fragment file using the option **-f**. The fragment file is a file where each line is a read which is indexed by variants; see https://github.com/MinzhuXie/H-PoPG or https://github.com/realabolfazl/AltHap for more details about the fragment file specifcation (called the *input snp matrix* by H-PoP). Specifying a compatible VCF file with a fragment file uses genotyping information to produce a higher quality output; only SNPs will be processed in the VCF.  
 
 For testing purposes and compatibility with other haplotype phasing algorithms, the binary **frag-dump** is provided in the same folder as the **flopp** binary. 
 
 `frag-dump -b bamfile.bam -v vcffile.vcf -o frags.txt` gives a fragment file a.k.a input snp matrix which is compatible with H-PoP and other haplotype phasing algorithms. 
+
+#### VCF requires contig headers
+We found that some variant callers don't put contig headers in the VCF file. In this situation, run `python scripts/write_contig_headers_vcf.py (vcf_file)` to get a new VCF with contig headers.
 
 ## Citing flopp
 
