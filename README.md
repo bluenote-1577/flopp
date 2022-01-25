@@ -101,6 +101,6 @@ We found that some variant callers don't put contig headers in the VCF file. In 
 
 ## Citing flopp
 
-Jim Shaw and Yun William Yu; Practical probabilistic and graphical formulations of long-read polyploid haplotype phasing. (Accepted to [RECOMB2021](https://www.recomb2021.org/))
+Jim Shaw and Yun William Yu. [flopp: Extremely Fast Long-Read Polyploid Haplotype Phasing by Uniform Tree Partitioning](https://www.liebertpub.com/doi/full/10.1089/cmb.2021.0436) (2022). Journal of Computational Biology: RECOMB 2021 Issue. 
 
 
