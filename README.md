@@ -64,9 +64,17 @@ The bam file may contain multiple contigs/references which the reads are mapped 
 ### Phased haplotype output (-o option)
 flopp outputs a phased haplotype file in the following format:
 
-1. Column 1 is (variant) : (genome position) where (variant) is the i-th variant, and the genome position is the the position of the genome on the reference.
+```
+**contig name**                           k columns                                  k columns
+(snp #1):(genome position)     (inferred allele #: 0/1/2...) ...     (allele #1):(support)|(allele #2):(support)|...
+(snp #2):(genome position)     (inferred allele #: 0/1/2...) ...     (allele #1):(support)|(allele #2):(support)|...
+...
+
+```
+
+1. Column 1 is (variant) : (genome position) where (variant) is the i-th variant, and (genome position) is the the position of the variant on the reference.
 2. The next k columns are the k phased haplotypes for an organism of ploidy k. 0 represents the reference allele, 1 the first alternate, and so forth. 
-3. The next k columns are of the form (allele):(# calls)|(allele):(# calls) where (allele) = 0,1,... and (# calls) is the number of reads assigned to a specific haplotype which contain that allele. For example, 0:10|1:5 indicates that 10 reads assigned to this haplotype have allele 0 at this position, and 5 reads have allele 1. 
+3. The next k columns are of the form (allele):(support)|(allele):(support) where (allele) = 0,1,... and (support) is the number of reads assigned to the specific haplotype for that allele. For example, 0:10|1:5 indicates that 10 reads assigned to this haplotype have allele 0 at this position, and 5 reads have allele 1. 
 
 If using a bam file with multiple contigs being mapped to, the output file contains multiple phased haplotypes of the above format which are delimited by `**(contig name)**`.
 
@@ -101,6 +109,6 @@ We found that some variant callers don't put contig headers in the VCF file. In 
 
 ## Citing flopp
 
-Jim Shaw and Yun William Yu; Practical probabilistic and graphical formulations of long-read polyploid haplotype phasing. (Accepted to [RECOMB2021](https://www.recomb2021.org/))
+Jim Shaw and Yun William Yu. [flopp: Extremely Fast Long-Read Polyploid Haplotype Phasing by Uniform Tree Partitioning](https://www.liebertpub.com/doi/full/10.1089/cmb.2021.0436) (2022). Journal of Computational Biology: RECOMB 2021 Issue. 
 
 
