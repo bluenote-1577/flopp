@@ -2,12 +2,13 @@ import pysam
 import subprocess
 import sys
 
-if len(sys.argv) < 3:
-    print("usage: haplotag_bam.py contig_part.txt original_bam.bam")
+if len(sys.argv) < 4:
+    print("usage: haplotag_bam.py contig_part.txt original_bam.bam new_haplotagged_bam_name.bam")
     exit()
 
 read_part_file = sys.argv[1]
 bam_file = sys.argv[2]
+new_name = sys.argv[3]
 bam = pysam.AlignmentFile(bam_file)
 
 read_part = []
@@ -22,7 +23,7 @@ for line in open(read_part_file,'r'):
 
 ploidy = len(read_part)
 
-new_bam_name = bam_file + '-haplotagged'
+new_bam_name = new_name
 new_bam_file = pysam.AlignmentFile(new_bam_name, "wb", template=bam)
 
 for b in bam.fetch(until_eof=True):
