@@ -261,6 +261,10 @@ fn main() {
 
     let mut first_iter = true;
 
+    if all_frags_map.is_empty(){
+        panic!("No fragments found. Either the VCF file has no variants or none of the reads in the BAM file were able to be processed");
+    }
+
     for (contig, all_frags) in all_frags_map.iter_mut() {
         if snp_to_genome_pos_map.contains_key(contig) || bam == false {
             let mut genotype_dict: &FxHashMap<usize, FxHashMap<usize, usize>> =
