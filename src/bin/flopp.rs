@@ -294,7 +294,7 @@ fn main() {
 
             //We use the median # bases spanned by fragments as the length of blocks.
             let avg_read_length = utils_frags::get_avg_length(&all_frags, 0.5);
-            println!("Median read length is {}", avg_read_length);
+            println!("Median read length is {} SNPs", avg_read_length);
 
 
             //The sample size correction factor for the binomial test used on the bases/errors.
@@ -318,8 +318,8 @@ fn main() {
 
             //Get last SNP on the genome covered over all fragments.
             let length_gn = utils_frags::get_length_gn(&all_frags);
-            println!("Length of genome is {}", length_gn);
-            println!("Length of each block is {}", length_block);
+            println!("Length of genome is {} SNPs", length_gn);
+            println!("Length of each block is {} SNPs", length_block);
             //How many blocks we iterate through to estimate epsilon.
             let num_epsilon_attempts = 20;
             let mut epsilon = 0.03;
