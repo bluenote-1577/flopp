@@ -93,7 +93,7 @@ To create a new BAM with the `HP:i:x` tags where `x` is 0,1,2,... indicates whic
 
 ``python scripts/haplotag_bam.py contig_part.txt original_input_bam.bam new_haplotagged_bam_name.bam``
 
-This script requires [pysam](https://github.com/pysam-developers/pysam) to be installed. 
+Where `contig_part.txt` is a file in the directory specified by the -P option. This script requires [pysam](https://github.com/pysam-developers/pysam) to be installed. This only works for one contig at a time for now. 
 
 #### Splitting BAM file
 
