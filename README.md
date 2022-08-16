@@ -85,11 +85,23 @@ If also using `-P` option, flopp outputs the read partition obtained by flopp. T
 ...
 ```
 
+### Haplotagging BAM or splitting BAM by phasing
+
+#### Haplotagging BAM
+
+To create a new BAM with the `HP:i:x` tags where `x` is 0,1,2,... indicates which haplotype the read belongs to, use 
+
+``python scripts/haplotag_bam.py contig_part.txt original_input_bam.bam new_haplotagged_bam_name.bam``
+
+This script requires [pysam](https://github.com/pysam-developers/pysam) to be installed. 
+
+#### Splitting BAM file
+
 To get a set of BAM files which correspond to the output read partition (i.e. the haplotypes), use
 
-``python scripts/get_bam_partition.py (-P output file) (original BAM file) (prefix name for output)``
+``python scripts/get_bam_partition.py contig_part.txt original_input_bam.bam prefix_name``
 
-This will output a set of bams labelled `prefix_name1.bam`, `prefix_name2.bam` and so forth. This script requires pysam.
+This will output a set of bams labelled `prefix_name1.bam`, `prefix_name2.bam` and so forth. This script requires [pysam](https://github.com/pysam-developers/pysam).
 
 ## Misc.
 
