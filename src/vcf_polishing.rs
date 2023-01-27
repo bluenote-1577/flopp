@@ -711,10 +711,12 @@ pub fn link_blocks_greedy<'a>(all_parts: &Vec<Vec<FxHashSet<&'a Frag>>>,
         }
     }
 
-    for j in 0..ploidy{
-        part_size_distribution_sum[j].sort();
-        let dist = &part_size_distribution_sum[j];
-        //dbg!(dist[(dist.len() as f64 * 0.5) as usize]);
+    if part_size_distribution_sum.len() == ploidy{
+        for j in 0..ploidy{
+            part_size_distribution_sum[j].sort();
+            let dist = &part_size_distribution_sum[j];
+            //dbg!(dist[(dist.len() as f64 * 0.5) as usize]);
+        }
     }
     final_part
 }
