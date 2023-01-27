@@ -16,7 +16,7 @@ for a single individual, **flopp** outputs a set of phased haplotypes.
 1. [rust](https://www.rust-lang.org/tools/install) and associated tools such as cargo are required and assumed to be in PATH.
 ### Install
 
-```
+```sh
 git clone https://github.com/bluenote-1577/flopp
 cd flopp
 cargo build --release
@@ -27,7 +27,7 @@ cargo build --release
 
 ## Using flopp
 
-```
+```sh
 # with VCF + BAM. "-v" constrains phasing by VCF genotypes.
 flopp -b bamfile.bam -v vcffile.vcf -p (ploidy) -o results.txt -P partition_directory 
 
