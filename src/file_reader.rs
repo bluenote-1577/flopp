@@ -42,7 +42,7 @@ where
     if let Ok(lines) = read_lines(filename) {
         for line in lines {
             if let Ok(l) = line {
-                let v: Vec<&str> = l.split('\t').collect();
+                let v: Vec<&str> = l.split_whitespace().collect();
 
                 //First column is the # of blocks
                 if let Ok(num_blocks) = v[0].parse::<i32>() {
