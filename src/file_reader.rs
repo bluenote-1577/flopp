@@ -43,6 +43,7 @@ where
         for line in lines {
             if let Ok(l) = line {
                 let v: Vec<&str> = l.split_whitespace().collect();
+                dbg!(&v);
 
                 //First column is the # of blocks
                 if let Ok(num_blocks) = v[0].parse::<i32>() {
@@ -539,7 +540,11 @@ pub fn write_frags_file(frags: Vec<Frag>, filename: String) {
         }
 
         for q in qual_block.iter() {
-            write!(file, "{}", (*q + 33) as char).unwrap();
+            if *q as usize + 33 > 255 {
+                write!(file, "{}", (*q) as char).unwrap();
+            } else {
+                write!(file, "{}", (*q + 33) as char).unwrap();
+            }
         }
 
         write!(file, "\n").unwrap();
