@@ -310,7 +310,12 @@ fn main() {
 
             //UPEM scores for each block.
             let scores: Mutex<Vec<(f64, usize)>> = Mutex::new(vec![]);
-            let length_block = utils_frags::get_avg_length(&all_frags, block_len_quant);
+            let mut length_block = utils_frags::get_avg_length(&all_frags, block_len_quant);
+            let mut quant = block_len_quant;
+            while length_block == 0 {
+                length_block = utils_frags::get_avg_length(&all_frags, quant);
+                quant += 0.1;
+            }
 
             //If we want blocks to overlap -- I don't think we actually want blocks to overlap but this may
             //be an optional parameter for testing purposes.

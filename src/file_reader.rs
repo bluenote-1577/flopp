@@ -43,7 +43,6 @@ where
         for line in lines {
             if let Ok(l) = line {
                 let v: Vec<&str> = l.split_whitespace().collect();
-                dbg!(&v);
 
                 //First column is the # of blocks
                 if let Ok(num_blocks) = v[0].parse::<i32>() {
