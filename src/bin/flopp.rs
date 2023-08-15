@@ -344,6 +344,11 @@ fn main() {
                     epsilon,
                 );
             }
+            
+            if epsilon == -1.0{
+                println!("Contig {} has too few fragments; skipping", &contig);
+                continue
+            }
 
             //TEST TODO
             //epsilon = epsilon * ploidy as f64 / 4.0;

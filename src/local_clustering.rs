@@ -1023,6 +1023,9 @@ pub fn estimate_epsilon(
     }
 
     let percentile_index = epsilons.len() / 10;
+    if epsilons.len() == 0{
+        return -1.0;
+    }
 
     epsilons.sort_by(|a, b| a.partial_cmp(&b).unwrap());
     epsilons[percentile_index]

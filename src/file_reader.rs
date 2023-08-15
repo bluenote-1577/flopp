@@ -304,6 +304,7 @@ where
                 let flags = aln_record.flags();
                 let errors_mask = 1796;
                 let secondary_mask = 256;
+                let suppl_mask = 2048;
                 let id_to_frag = ref_id_to_frag
                     .entry(ref_chrom)
                     .or_insert(FxHashMap::default());
@@ -317,6 +318,12 @@ where
 
                 //Secondary alignment, skip
                 if flags & secondary_mask > 0 {
+                    //dbg!(&flags,&id_string);
+                    continue;
+                }
+
+                //supp alignment, skip
+                if flags & suppl_mask > 0 {
                     //dbg!(&flags,&id_string);
                     continue;
                 }
