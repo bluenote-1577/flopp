@@ -289,6 +289,11 @@ fn main() {
                 }
             }
 
+            if all_frags.is_empty(){
+                println!("Contig {} has no fragments; skipping", &contig);
+                continue
+            }
+
             //We need frags sorted by first position to make indexing easier.
             all_frags.sort_by(|a, b| a.first_position.cmp(&b.first_position));
 
