@@ -117,12 +117,12 @@ We found that some variant callers don't put contig headers in the VCF file. In 
 
 ## Release Notes:
 
-### v0.2.1 - Aug 18, 2023
+### v0.2.0 - Aug 18, 2023
 
 - Fixed some 0-index out of bounds bugs caused by secondary alignments and very short read fragments
 - Fixed a bug where supplementary alignments were used incorrectly. Only primary alignments are used in the BAM file now. 
 
-### v0.2.0 flopp - Aug 25, 2021
+### v0.1.0+ flopp - Aug 25, 2021
 
 - Added options; user can now manipulate error rates, block lengths, and more
 - flopp can now output the read partition obtained by phasing using the -P option
