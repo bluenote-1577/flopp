@@ -13,8 +13,8 @@ statrs="0.13"
 permute="*"
 rayon="*"
 rand="0.7"
-rand_pcg="*"
-rust-htslib="*"
+rand_pcg="0.2"
+rust-htslib= { version = "*", default-features = false }
 clap = "2"
 
 [dev-dependencies]
@@ -23,6 +23,7 @@ predicates = "1"
 
 [profile.release]
 opt-level = 3
+lto = true
 
 [profile.dev]
 opt-level = 3
