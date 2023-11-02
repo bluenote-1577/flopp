@@ -16,6 +16,14 @@ for a single individual, **flopp** outputs a set of phased haplotypes.
 1. [rust](https://www.rust-lang.org/tools/install) and associated tools such as cargo are required and assumed to be in PATH.
 ### Install
 
+flopp is installable as a bioconda package using
+
+```sh
+conda install -c bioconda flopp
+```
+
+or if compiling through Rust
+
 ```sh
 git clone https://github.com/bluenote-1577/flopp
 cd flopp
