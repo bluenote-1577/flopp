@@ -48,7 +48,15 @@ flopp -f fragfile.frags -p (ploidy) -o unpolished_results.txt
 ```
 The ploidy of the organism must be specified. The number of threads (default 10) can be specified using the -t option. See `flopp -h` for more information.  
 
-For a quick test, we provide a VCF and BAM files in the tests folder. Run ``flopp -b tests/test_bams/pds_ploidy3.bam -v tests/test_vcfs/pds.vcf -p 3 -o results.txt -P test_partition_directory`` to run flopp on a 3 Mb section of a simulated 3x ploidy potato chromosome with 30x read coverage.
+For a quick test, we provide a VCF and BAM files in the tests folder. Run 
+```sh
+# clone this repo if you haven't
+git clone https://github.com/bluenote-1577/flopp
+cd flopp
+# assuming flopp is in PATH
+flopp -b tests/test_bams/pds_ploidy3.bam -v tests/test_vcfs/pds.vcf -p 3 -o results.txt -P test_partition_directory
+```
+to run flopp on a 3 Mb section of a simulated 3x ploidy potato chromosome with 30x read coverage.
 
 ### BAM + VCF
 The standard mode of usage is to specify a bam file using the option **-b** and a vcf file using the option **-v** or **-c**. 
